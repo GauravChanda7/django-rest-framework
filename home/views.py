@@ -1,8 +1,9 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
 from .models import Person
 from .serializers import PersonSerializer, LoginSerializer
+from rest_framework.views import APIView
 
 
 # Create your views here.
@@ -96,3 +97,38 @@ def login(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PersonClassAPI(APIView):
+    def get(self, request):
+        return Response({'message' : 'This ia a get method'})
+    
+    def post(self, request):
+        return Response({'message' : 'This is a post method'})
+    
+    def put(self, request):
+        return Response({'message' : 'This is a put method'})
+    
+    def patch(self, request):
+        return Response({'message' : 'This is a patch method'})
+    
+    def delete(self, request):
+        return Response({'message' : 'This is a delete method'})
+    
+
+
+class PeopleViewSet(viewsets.ModelViewSet):
+    serializer_class = PersonSerializer
+    queryset = Person.objects.all()
+
+    def list(self, request):
+        search = request.GET.get('search')
+        queryset = self.queryset
+
+        if search:
+            queryset = queryset.filter(name__startswith = search)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        
