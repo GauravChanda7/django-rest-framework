@@ -1,0 +1,16 @@
+# Virtual Environment
+/venv/
+
+# Database
+/db.sqlite3
+
+# Python cache files
+/__pycache__/
+*.pyc
+
+# Django project files
+/media/
+/staticfiles/
+
+# Environment variables (important for security)
+.env
