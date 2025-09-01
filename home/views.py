@@ -2,11 +2,81 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from .models import Person
-from .serializers import PersonSerializer, LoginSerializer
+from .serializers import PersonSerializer, LoginSerializer, RegisterUserSerializer, LoginUserSerializer
 from rest_framework.views import APIView
+
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+
+
 
 
 # Create your views here.
+
+class RegisterAPIUser(APIView):
+
+    def post(self, request):
+        data = request.data
+        serializer = RegisterUserSerializer(data=data)
+
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class LoginAPIUser(APIView):
+
+    def post(self, request):
+        data = request.data
+        serializer = LoginUserSerializer(data=data)
+
+        serializer.is_valid(raise_exception=True)
+        user = authenticate(
+            username = serializer.validated_data['username'],
+            password = serializer.validated_data['password'],
+        )
+
+        if user:
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({'token' : token.key}, status=status.HTTP_200_OK)
+        
+        return Response({'message' : 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class PersonClassAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    def get(self, request):
+        return Response({'message' : 'This ia a get method'})
+    
+    def post(self, request):
+        return Response({'message' : 'This is a post method'})
+    
+    def put(self, request):
+        return Response({'message' : 'This is a put method'})
+    
+    def patch(self, request):
+        return Response({'message' : 'This is a patch method'})
+    
+    def delete(self, request):
+        return Response({'message' : 'This is a delete method'})
+
+
+        
+
+
+
+
+
+
+
+
+
+
 
 @api_view(['GET', 'POST', 'PUT'])
 def index(request):
@@ -99,21 +169,7 @@ def login(request):
     return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PersonClassAPI(APIView):
-    def get(self, request):
-        return Response({'message' : 'This ia a get method'})
-    
-    def post(self, request):
-        return Response({'message' : 'This is a post method'})
-    
-    def put(self, request):
-        return Response({'message' : 'This is a put method'})
-    
-    def patch(self, request):
-        return Response({'message' : 'This is a patch method'})
-    
-    def delete(self, request):
-        return Response({'message' : 'This is a delete method'})
+
     
 
 

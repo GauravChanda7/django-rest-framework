@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import PersonClassAPI, PeopleViewSet
+from .views import PersonClassAPI, PeopleViewSet, RegisterAPIUser, LoginAPIUser
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -14,5 +14,8 @@ urlpatterns = [
     path('person/add/', views.add_person),
     path('person/<int:pk>/', views.person),
     path('login/', views.login),
-    path('person-api/', PersonClassAPI.as_view()),
+    
+    path('user/register/', RegisterAPIUser.as_view()),
+    path('user/login/', LoginAPIUser.as_view()),
+    path('user/person-api/', PersonClassAPI.as_view()),
 ]
