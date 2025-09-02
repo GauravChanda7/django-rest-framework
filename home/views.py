@@ -2,14 +2,16 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from .models import Person
-from .serializers import PersonSerializer, LoginSerializer, RegisterUserSerializer, LoginUserSerializer
+from .serializers import PersonSerializer, RegisterUserSerializer, LoginUserSerializer, UserSerializer
 from rest_framework.views import APIView
 
+from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 
+from .pagination import CustomUserPagination
 
 
 
@@ -50,8 +52,18 @@ class LoginAPIUser(APIView):
 class PersonClassAPI(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
+    pagination_class = CustomUserPagination
+
     def get(self, request):
-        return Response({'message' : 'This ia a get method'})
+        users = User.objects.all()
+        paginator = self.pagination_class()
+        paginated_users = paginator.paginate_queryset(users, request)
+
+        if paginated_users:
+            serializer = UserSerializer(paginated_users, many = True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        return Response({'message' : 'No data available'}, status=status.HTTP_204_NO_CONTENT)
     
     def post(self, request):
         return Response({'message' : 'This is a post method'})
@@ -67,6 +79,31 @@ class PersonClassAPI(APIView):
 
 
         
+
+
+
+
+
+
+
+
+class PeopleViewSet(viewsets.ModelViewSet):
+    serializer_class = PersonSerializer
+    queryset = Person.objects.all()
+
+    def list(self, request):
+        search = request.GET.get('search')
+        queryset = self.queryset
+
+        if search:
+            queryset = queryset.filter(name__startswith = search)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
 
 
 
@@ -161,30 +198,11 @@ def add_person(request):
 @api_view(['POST'])
 def login(request):
     data = request.data
-    serializer = LoginSerializer(data=data)
+    serializer = LoginUserSerializer(data=data)
 
     if serializer.is_valid():
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-    
-
-
-class PeopleViewSet(viewsets.ModelViewSet):
-    serializer_class = PersonSerializer
-    queryset = Person.objects.all()
-
-    def list(self, request):
-        search = request.GET.get('search')
-        queryset = self.queryset
-
-        if search:
-            queryset = queryset.filter(name__startswith = search)
-        
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
         
         
