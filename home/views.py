@@ -1,4 +1,4 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from .models import Person
@@ -90,6 +90,7 @@ class PersonClassAPI(APIView):
 class PeopleViewSet(viewsets.ModelViewSet):
     serializer_class = PersonSerializer
     queryset = Person.objects.all()
+    http_method_names = ['get', 'post']
 
     def list(self, request):
         search = request.GET.get('search')
@@ -100,6 +101,16 @@ class PeopleViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+    @action(detail=True, methods=['POST'])
+    def send_mail_to(self, request, pk):
+        user = Person.objects.get(pk=pk)
+        serializer = self.get_serializer(user)
+
+        return Response({'message' : 'email sent',
+                         'user' : serializer.data
+                        }, status=status.HTTP_200_OK)
 
 
 
